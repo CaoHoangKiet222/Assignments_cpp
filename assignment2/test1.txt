@@ -1,0 +1,12 @@
+INSERT x15 number false
+PRINT
+INSERT x10 number false
+PRINT
+INSERT x17 number false
+PRINT
+INSERT x7 number false
+PRINT
+INSERT x13 number false
+PRINT
+INSERT x16 number false
+PRINT
