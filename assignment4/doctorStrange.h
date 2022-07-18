@@ -19,18 +19,74 @@ using namespace std;
 int ROW = 7;
 int COLUMN = 7;
 
-string Tokenize(string s, int &start, string del = " ") {
-  string result;
-  int end = (int)s.find(del, start);
-  if (end == -1) {
-    result = s.substr(start, (int)s.find("!", start) - start);
-    start = (int)s.size();
-  } else {
-    result = s.substr(start, end - start);
-    start = (int)end + (int)del.size();
+string anotherTokenize(string s, int &start, string del = " ");
+
+struct Levitation {
+  int times_resist;
+  bool isReal;
+  bool isWearing;
+
+  Levitation() : times_resist(0), isReal(false), isWearing(false) {}
+
+  void summon() {
+    this->times_resist = 3;
+    this->isReal = true;
+    this->isWearing = true;
   }
-  return result;
-}
+};
+
+struct Wong {
+  int times_help;
+  bool isCalled;
+  bool isReal;
+
+  Wong() : times_help(0), isCalled(false), isReal(false){};
+
+  void init() {
+    this->times_help = 3;
+    this->isCalled = true;
+    this->isReal = true;
+  }
+
+  void initFake() {
+    this->times_help = 3;
+    this->isCalled = true;
+    this->isReal = false;
+  }
+
+  bool returnToKamarTaj(bool isReal) {
+    if (this->isCalled && isReal) {
+      if (this->times_help >= 1) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void kill() {
+    if (this->isCalled && !this->isReal) {
+      this->times_help = 0;
+      this->isCalled = true;
+      this->isReal = false;
+    }
+  }
+};
+
+struct Mushroom {
+  int times_poisoned;
+  bool isEating;
+  Mushroom() : times_poisoned(0), isEating(false){};
+
+  void activate() {
+    this->times_poisoned = 3;
+    this->isEating = true;
+  }
+
+  void inactivate() {
+    this->times_poisoned = 0;
+    this->isEating = false;
+  }
+};
 
 struct Wanda {
   bool deprive_levitation;
@@ -80,18 +136,6 @@ struct Wanda {
   }
 };
 
-string anotherTokenize(string s, int &start, string del = " ") {
-  string result;
-  int end = (int)s.find(del, start);
-  if (end == -1) {
-    result = s.substr(start);
-  } else {
-    result = s.substr(start, end - start);
-    start = (int)end + (int)del.size();
-  }
-  return result;
-}
-
 struct Gates {
   int *array;
   int size;
@@ -130,6 +174,69 @@ struct Gates {
     this->array = nullptr;
   }
 };
+
+struct TimeThrowback {
+  int return_at_event;
+  int maxHP;
+  int event_has_maxHP;
+  bool isActivate;
+
+  TimeThrowback() : return_at_event(-1), maxHP(INT16_MIN), isActivate(false){};
+
+  void activate(int &start) {
+    this->isActivate = true;
+    start = this->event_has_maxHP;
+  }
+};
+
+struct Doctor {
+  int HP;
+  int maxHP;
+  int LV;
+  int EXP;
+  int TS;
+  Levitation levitation;
+  Wong wong;
+  Mushroom mushroom;
+  Wanda wanda;
+  Gates gates;
+  TimeThrowback throwback;
+
+  Doctor(int hp, int maxHp, int lv, int exp, int ts)
+      : HP(hp), maxHP(maxHp), LV(lv), EXP(exp), TS(ts){};
+
+  void initThrowBack(int hp, int lv, int exp, int ts) {
+    this->HP = hp;
+    this->LV = lv;
+    this->EXP = exp;
+    this->TS = ts;
+  }
+};
+
+string Tokenize(string s, int &start, string del = " ") {
+  string result;
+  int end = (int)s.find(del, start);
+  if (end == -1) {
+    result = s.substr(start, (int)s.find("!", start) - start);
+    start = (int)s.size();
+  } else {
+    result = s.substr(start, end - start);
+    start = (int)end + (int)del.size();
+  }
+  return result;
+}
+
+string anotherTokenize(string s, int &start, string del) {
+  string result;
+  int end = (int)s.find(del, start);
+  if (end == -1) {
+    result = s.substr(start);
+  } else {
+    result = s.substr(start, end - start);
+    start = (int)end + (int)del.size();
+  }
+  return result;
+}
 
 bool initMatrix(int **&matrix, string s, int &start) {
   for (int i = 0; i < ROW; i++) {
@@ -173,79 +280,12 @@ void reverse(string &s, int start, int end) {
   }
 }
 
-struct Mushroom {
-  int times_poisoned;
-  bool isEating;
-  Mushroom() : times_poisoned(0), isEating(false){};
-
-  void activate() {
-    this->times_poisoned = 3;
-    this->isEating = true;
-  }
-
-  void inactivate() {
-    this->times_poisoned = 0;
-    this->isEating = false;
-  }
-};
-
 long long Fibonacci(int n) {
   if (n == 1 || n == 2) {
     return 1;
   }
   return Fibonacci(n - 1) + Fibonacci(n - 2);
 }
-
-struct Wong {
-  int times_help;
-  bool isCalled;
-  bool isReal;
-
-  Wong() : times_help(0), isCalled(false), isReal(false){};
-
-  void init() {
-    this->times_help = 3;
-    this->isCalled = true;
-    this->isReal = true;
-  }
-
-  void initFake() {
-    this->times_help = 3;
-    this->isCalled = true;
-    this->isReal = false;
-  }
-
-  bool returnToKamarTaj(bool isReal) {
-    if (this->isCalled && isReal) {
-      if (this->times_help >= 1) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  void kill() {
-    if (this->isCalled && !this->isReal) {
-      this->times_help = 0;
-      this->isCalled = true;
-      this->isReal = false;
-    }
-  }
-};
-
-struct Levitation {
-  int times_resist;
-  bool isReal;
-  bool isWearing;
-
-  Levitation() : times_resist(0), isReal(false), isWearing(false) {}
-
-  void summon() {
-    this->times_resist = 3;
-    this->isReal = true;
-    this->isWearing = true;
-  }
-};
 
 bool isPrime(int n) {
   if (n <= 1) {
@@ -264,22 +304,6 @@ int nearestPrime(int n) {
     ;
   return n;
 }
-
-struct Doctor {
-  int HP;
-  int maxHP;
-  int LV;
-  int EXP;
-  int TS;
-  Levitation levitation;
-  Wong wong;
-  Mushroom mushroom;
-  Wanda wanda;
-  Gates gates;
-
-  Doctor(int hp, int maxHp, int lv, int exp, int ts)
-      : HP(hp), maxHP(maxHp), LV(lv), EXP(exp), TS(ts){};
-};
 
 void levelUp(Doctor &doctor, int exp) {
   doctor.EXP += exp;
@@ -325,8 +349,6 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
     levelUp(doctor, exp / 2);
   } else {
     if (doctor.levitation.isWearing && doctor.levitation.isReal) {
-      // cout << "isWearing" << doctor.levitation.isWearing << '\n';
-      // cout << "times_resist: " << doctor.levitation.times_resist << '\n';
       if (doctor.levitation.times_resist >= 1) {
         int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
         doctor.HP -= (baseDamage * LVo * 10) * (100 - G_y) / 100;
@@ -359,8 +381,15 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
   if (events[0] == '!') {
     int start = 1;
+
     int ith_event = 0;
     while (start != (int)events.size()) {
+
+      if (!doctor.throwback.isActivate) {
+        // save event index for time throwback
+        doctor.throwback.return_at_event = start;
+      }
+
       string event = Tokenize(events, start, "#");
       int event_num = stoi(event.substr(0, (int)event.find(" ", 0)));
       ith_event += 1;
@@ -668,7 +697,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         } else {
           return -1;
         }
-
+        break;
+      }
+      case 15: {
+        if (!doctor.throwback.isActivate && doctor.TS >= 1) {
+          doctor.throwback.activate(start);
+          doctor.initThrowBack(doctor.throwback.maxHP, 10, 100, doctor.TS - 1);
+        }
         break;
       }
       }
@@ -677,16 +712,14 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         doctor.wong.kill();
       }
 
-      if (doctor.HP <= 0) {
-        if (doctor.TS == 0) {
-          return -1;
+      // save HP after doing event for time throwback
+      if (!doctor.throwback.isActivate) {
+        if (doctor.throwback.maxHP <= doctor.HP) {
+          doctor.throwback.maxHP = doctor.HP;
+          doctor.throwback.event_has_maxHP = doctor.throwback.return_at_event;
+        } else {
+          doctor.throwback.return_at_event = doctor.throwback.event_has_maxHP;
         }
-
-        doctor.wong.kill();
-        doctor.mushroom.inactivate();
-
-        doctor.TS -= 1;
-        doctor.HP = doctor.maxHP;
       }
 
       cout << "event: " << event << "\n";
@@ -700,8 +733,23 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       cout << "mushroom: " << doctor.mushroom.isEating << " "
            << doctor.mushroom.times_poisoned << '\n';
       cout << "wanda: " << doctor.wanda.deprive_levitation << " "
-           << doctor.wanda.chances_to_kill << '\n'
+           << doctor.wanda.chances_to_kill << '\n';
+      cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
+           << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
+           << '\n'
            << '\n';
+
+      if (doctor.HP <= 0) {
+        if (doctor.TS == 0) {
+          return -1;
+        }
+
+        doctor.wong.kill();
+        doctor.mushroom.inactivate();
+
+        doctor.TS -= 1;
+        doctor.HP = doctor.maxHP;
+      }
     }
     return doctor.HP + doctor.LV + doctor.EXP + doctor.TS;
   }
