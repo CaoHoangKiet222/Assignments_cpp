@@ -305,6 +305,15 @@ int nearestPrime(int n) {
   return n;
 }
 
+bool isAlphabet(string s) {
+  for (int i = 0; i < (int)s.size(); i++) {
+    if (tolower(s[i]) < 'a' || tolower(s[i]) > 'z') {
+      return false;
+    }
+  }
+  return true;
+}
+
 void levelUp(Doctor &doctor, int exp) {
   doctor.EXP += exp;
   while (doctor.EXP >= 100) {
@@ -337,7 +346,7 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
       doctor.wong.times_help--;
       return levelUp(doctor, exp);
     } else if (!doctor.wong.isReal && doctor.wong.times_help >= 1) {
-      doctor.HP -= baseDamage * LVo * 10;
+      doctor.HP -= (int)(baseDamage * LVo * 10);
       doctor.wong.times_help--;
       return;
     }
@@ -351,11 +360,20 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
     if (doctor.levitation.isWearing && doctor.levitation.isReal) {
       if (doctor.levitation.times_resist >= 1) {
         int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
-        doctor.HP -= (baseDamage * LVo * 10) * (100 - G_y) / 100;
+        std::cout << "nearestPrime: " << nearestPrime(doctor.HP) << std::endl;
+        std::cout << "G_y: " << G_y << std::endl;
+        std::cout << "LVo: " << LVo << std::endl;
+        std::cout << "baseDamage: " << baseDamage << std::endl;
+        std::cout << "damage: "
+                  << (int)(baseDamage * LVo * 10) * (100 - G_y) / 100
+                  << std::endl;
+        doctor.HP -= (int)((baseDamage * LVo * 10) * (100 - G_y) / 100);
         doctor.levitation.times_resist--;
+      } else {
+        doctor.HP -= (int)(baseDamage * LVo * 10);
       }
     } else {
-      doctor.HP -= baseDamage * LVo * 10;
+      doctor.HP -= (int)(baseDamage * LVo * 10);
     }
   }
 }
@@ -391,6 +409,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
 
       string event = Tokenize(events, start, "#");
+      cout << "event: " << event << "\n";
       int event_num = stoi(event.substr(0, (int)event.find(" ", 0)));
       ith_event += 1;
 
@@ -440,7 +459,17 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
       case 6: {
         int index = (int)event.find(" ", 0) + 1;
+
+        if ((int)event.find(" ", index) != -1) {
+          return -1;
+        }
+
         string spells = event.substr(index);
+
+        if (!isAlphabet(spells)) {
+          return -1;
+        }
+
         bool isActivate = false;
 
         int F_x = ith_event + (int)spells.size();
@@ -452,15 +481,25 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         if (doctor.levitation.isWearing && doctor.levitation.isReal) {
           if (doctor.levitation.times_resist >= 1) {
             int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
+            // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) <<
+            // std::endl;
+            std::cout << "G_y: " << G_y << std::endl;
             winning_rate += G_y;
             blood_loss_reduction_rate += G_y;
             isActivate = true;
           }
         }
 
+        std::cout << "winning_rate: " << winning_rate << std::endl;
+        std::cout << "blood_loss_reduction_rate: " << blood_loss_reduction_rate
+                  << std::endl;
+
         if (winning_rate > F_x) {
           levelUp(doctor, 200);
           doctor.TS += 1;
+          if (doctor.TS > 5) {
+            doctor.TS = 5;
+          }
         } else {
           if (blood_loss_reduction_rate < 100) {
             if (doctor.HP < 100) {
@@ -549,6 +588,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         if (!doctor.wong.returnToKamarTaj(!doctor.wong.isReal)) {
           doctor.wong.times_help--;
         }
+
         doctor.HP -= 50;
         break;
       }
@@ -561,6 +601,10 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
         string code_1 = anotherTokenize(event, st);
         string code_2 = anotherTokenize(event, st);
+
+        if (!isAlphabet(code_1) || !isAlphabet(code_2)) {
+          return -1;
+        }
 
         if (code_1 == "" || code_2 == "" || code_1 == event ||
             code_2 == event || code_2 == code_1) {
@@ -713,6 +757,18 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
 
       // save HP after doing event for time throwback
+      if (doctor.HP <= 0) {
+        if (doctor.TS == 0) {
+          return -1;
+        }
+
+        doctor.wong.kill();
+        doctor.mushroom.inactivate();
+
+        doctor.TS -= 1;
+        doctor.HP = doctor.maxHP;
+      }
+
       if (!doctor.throwback.isActivate) {
         if (doctor.throwback.maxHP <= doctor.HP) {
           doctor.throwback.maxHP = doctor.HP;
@@ -722,9 +778,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
       }
 
-      cout << "event: " << event << "\n";
-      cout << doctor.maxHP << " " << doctor.HP << " " << doctor.LV << " "
-           << doctor.EXP << " " << doctor.TS << "\n";
+
+      cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
+           << " " << doctor.EXP << " " << doctor.TS << "\n";
       cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
            << " " << doctor.wong.times_help << "\n";
       cout << "levitation: " << doctor.levitation.isWearing << " "
@@ -738,18 +794,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
            << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
            << '\n'
            << '\n';
-
-      if (doctor.HP <= 0) {
-        if (doctor.TS == 0) {
-          return -1;
-        }
-
-        doctor.wong.kill();
-        doctor.mushroom.inactivate();
-
-        doctor.TS -= 1;
-        doctor.HP = doctor.maxHP;
-      }
     }
     return doctor.HP + doctor.LV + doctor.EXP + doctor.TS;
   }
