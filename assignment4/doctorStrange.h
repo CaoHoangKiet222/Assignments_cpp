@@ -91,24 +91,23 @@ struct Mushroom {
 struct Wanda {
   bool deprive_levitation;
   bool chances_to_kill;
-  bool is_negotiation;
+  bool negotiation;
   int TS;
 
   Wanda()
-      : deprive_levitation(false), chances_to_kill(false),
-        is_negotiation(false){};
+      : deprive_levitation(false), chances_to_kill(false), negotiation(false){};
 
   void activate(int TS) {
     this->deprive_levitation = true;
     this->chances_to_kill = true;
-    this->is_negotiation = true;
+    this->negotiation = true;
     this->TS = TS;
   }
 
   void inactivate() {
     this->deprive_levitation = false;
     this->chances_to_kill = false;
-    this->is_negotiation = false;
+    this->negotiation = false;
     this->TS = 0;
   }
 
@@ -144,13 +143,14 @@ struct Gates {
 
   bool initGates(string s, int &start) {
     this->array = new int;
+    cout << "s: " << s << "\n";
 
     while (s.find(" ", start) != -1) {
       string value = anotherTokenize(s, start);
       if (value == "") {
         return false;
       }
-      array[this->size++] = stoi(value);
+      this->array[this->size++] = stoi(value);
     }
 
     if (start >= (int)s.size() - 1) {
@@ -158,7 +158,7 @@ struct Gates {
       if (value == "") {
         return false;
       }
-      array[this->size++] = stoi(value);
+      this->array[this->size++] = stoi(value);
     }
 
     if (this->size == 0) {
@@ -167,6 +167,17 @@ struct Gates {
 
     return true;
   }
+
+  bool areDecrease() {
+    for (int i = 0; i < this->size - 1; i++) {
+      if (this->array[i] < this->array[i + 1]) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
 
   ~Gates() {
     delete this->array;
@@ -213,6 +224,45 @@ struct Doctor {
   }
 };
 
+struct KamarTaj {
+  int **matrix;
+
+  bool initMatrix(string s, int &start) {
+    this->matrix = new int *[ROW] { nullptr };
+    for (int i = 0; i < ROW; i++) {
+      this->matrix[i] = new int[COLUMN];
+      for (int j = 0; j < COLUMN; j++) {
+        string num = anotherTokenize(s, start);
+        if (num == "") {
+          return false;
+        }
+        this->matrix[i][j] = stoi(num);
+      }
+    }
+    return true;
+  }
+
+  bool matrixIncrease(int m, int index_row, int index_column) {
+    for (int i = index_column; i < index_column + m; i++) {
+      for (int j = index_row; j < index_row + m - 1; j++) {
+        if (this->matrix[j][i] < this->matrix[j + 1][i]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  ~KamarTaj() {
+    for (int i = 0; i < ROW; i++) {
+      delete[] this->matrix[i];
+      this->matrix[i] = nullptr;
+    }
+    delete[] this->matrix;
+    this->matrix = nullptr;
+  }
+};
+
 string Tokenize(string s, int &start, string del = " ") {
   string result;
   int end = (int)s.find(del, start);
@@ -238,40 +288,6 @@ string anotherTokenize(string s, int &start, string del) {
   return result;
 }
 
-bool initMatrix(int **&matrix, string s, int &start) {
-  for (int i = 0; i < ROW; i++) {
-    matrix[i] = new int[COLUMN];
-    for (int j = 0; j < COLUMN; j++) {
-      string num = anotherTokenize(s, start);
-      if (num == "") {
-        return false;
-      }
-      matrix[i][j] = stoi(num);
-    }
-  }
-  return true;
-}
-
-bool matrixIncrease(int **matrix, int m, int index_row, int index_column) {
-  for (int i = index_column; i < index_column + m; i++) {
-    for (int j = index_row; j < index_row + m - 1; j++) {
-      if (matrix[j][i] < matrix[j + 1][i]) {
-        return false;
-      }
-    }
-  }
-  return true;
-}
-
-void deleteMatrix(int **&matrix) {
-  for (int i = 0; i < ROW; i++) {
-    delete[] matrix[i];
-    matrix[i] = nullptr;
-  }
-  delete[] matrix;
-  matrix = nullptr;
-}
-
 void reverse(string &s, int start, int end) {
   for (int i = start; i < (end + start) / 2; i++) {
     char temp = s[i];
@@ -280,11 +296,21 @@ void reverse(string &s, int start, int end) {
   }
 }
 
-long long Fibonacci(int n) {
+double long Fibonacci(int n) {
   if (n == 1 || n == 2) {
     return 1;
   }
-  return Fibonacci(n - 1) + Fibonacci(n - 2);
+
+  int i = 3;
+  double long F_1 = 1, F_2 = 1, F_i;
+
+  while (i != n + 1) {
+    F_i = F_2 + F_1;
+    F_1 = F_2;
+    F_2 = F_i;
+    i++;
+  }
+  return F_i;
 }
 
 bool isPrime(int n) {
@@ -308,6 +334,15 @@ int nearestPrime(int n) {
 bool isAlphabet(string s) {
   for (int i = 0; i < (int)s.size(); i++) {
     if (tolower(s[i]) < 'a' || tolower(s[i]) > 'z') {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool isNumber(string s) {
+  for (int i = 0; i < (int)s.size(); i++) {
+    if (s[i] > '9' || s[i] < '1') {
       return false;
     }
   }
@@ -400,6 +435,10 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
   if (events[0] == '!') {
     int start = 1;
 
+    if (events[(int)events.size() - 1] != '!') {
+      return -1;
+    }
+
     int ith_event = 0;
     while (start != (int)events.size()) {
 
@@ -410,7 +449,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
       string event = Tokenize(events, start, "#");
       cout << "event: " << event << "\n";
-      int event_num = stoi(event.substr(0, (int)event.find(" ", 0)));
+      string event_num_str;
+
+      if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" || !isNumber(event_num_str)) {
+        return -1;
+      }
+
+      int event_num = stoi(event_num_str);
       ith_event += 1;
 
       int b = ith_event % 10;
@@ -567,6 +612,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 10: {
+        std::cout << "Fibonacci: " << Fibonacci(doctor.HP - 1) << std::endl;
         doctor.HP += Fibonacci(doctor.HP - 1);
         if (doctor.HP > doctor.maxHP) {
           doctor.HP = doctor.maxHP;
@@ -634,7 +680,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           // the decryption is successful
           doctor.HP -= doctor.HP * 0.1;
           doctor.maxHP -= doctor.maxHP * 0.1;
-          doctor.wanda.is_negotiation = true;
+          doctor.wanda.negotiation = true;
           levelUp(doctor, 30);
         } else {
           // the decryption is fail
@@ -652,14 +698,14 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
         st += 1;
 
-        int **matrix = new int *[ROW] { nullptr };
-        if (initMatrix(matrix, event, st)) {
-          // for (int i = 0; i < ROW; i++) {
-          //   for (int j = 0; j < COLUMN; j++) {
-          //     cout << matrix[i][j] << " ";
-          //   }
-          //   cout << "\n";
-          // }
+        KamarTaj kamar_taj;
+        if (kamar_taj.initMatrix(event, st)) {
+          for (int i = 0; i < ROW; i++) {
+            for (int j = 0; j < COLUMN; j++) {
+              cout << kamar_taj.matrix[i][j] << " ";
+            }
+            cout << "\n";
+          }
           int min_sum = INT16_MIN, min_index_row = -1, min_index_column = -1;
           int m = (ith_event % 7) > 2 ? (ith_event % 7) : 2;
           std::cout << "m: " << m << std::endl;
@@ -668,7 +714,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
               int sum = 0;
               for (int q = i; q < i + m; q++) {
                 for (int p = j; p < j + m; p++) {
-                  sum += matrix[q][p];
+                  sum += kamar_taj.matrix[q][p];
                 }
               }
               if (min_sum == INT16_MIN || min_sum >= sum) {
@@ -679,9 +725,10 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
             }
           }
 
-          std::cout << "min_sum: " << min_sum << " " << min_index_row << " "
-                    << min_index_column << std::endl;
-          if (matrixIncrease(matrix, m, min_index_row, min_index_column)) {
+          std::cout << "min_sum: " << min_sum << "\n"
+                    << "index_row: " << min_index_row << "\n"
+                    << "index_column: " << min_index_column << std::endl;
+          if (kamar_taj.matrixIncrease(m, min_index_row, min_index_column)) {
             // the defense against Wanda’s attack is successful
             doctor.HP += min_sum * (min_index_row + 1 + min_index_column + 1);
             if (doctor.HP > doctor.maxHP) {
@@ -693,16 +740,14 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
             // the defense against Wanda’s attack is fail
             doctor.HP -= min_sum * (min_index_row + 1 + min_index_column + 1);
             if (doctor.HP <= 0) {
-              if (doctor.wanda.is_negotiation) {
+              if (doctor.wanda.negotiation) {
                 if (!doctor.wanda.chances_to_kill) {
                   doctor.HP = 1;
                 }
               }
             }
           }
-          deleteMatrix(matrix);
         } else {
-          deleteMatrix(matrix);
           return -1;
         }
         break;
@@ -718,10 +763,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         std::cout << "key: " << key << std::endl;
 
         if (doctor.gates.initGates(event, st)) {
-          // for (int i = 0; i < doctor.gates.size; i++) {
-          //   std::cout << doctor.gates.array[i] << " ";
-          // }
-          // cout << "size: " << doctor.gates.size << "\n";
+            if (!doctor.gates.areDecrease()) {
+              return -1;
+            }
+          for (int i = 0; i < doctor.gates.size; i++) {
+            std::cout << doctor.gates.array[i] << " ";
+          }
+          cout << "size: " << doctor.gates.size << "\n";
           int wanda_moves = log2(doctor.gates.size);
           // cout << "wanda_moves: " << wanda_moves << "\n";
           int total_moves = 0;
@@ -778,7 +826,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
       }
 
-
       cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
            << " " << doctor.EXP << " " << doctor.TS << "\n";
       cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
@@ -789,7 +836,8 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       cout << "mushroom: " << doctor.mushroom.isEating << " "
            << doctor.mushroom.times_poisoned << '\n';
       cout << "wanda: " << doctor.wanda.deprive_levitation << " "
-           << doctor.wanda.chances_to_kill << '\n';
+           << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
+           << " " << doctor.wanda.TS << '\n';
       cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
            << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
            << '\n'
