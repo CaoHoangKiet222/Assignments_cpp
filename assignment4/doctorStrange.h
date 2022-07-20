@@ -20,6 +20,7 @@ int ROW = 7;
 int COLUMN = 7;
 
 string anotherTokenize(string s, int &start, string del = " ");
+bool isNumber(string s);
 
 struct Levitation {
   int times_resist;
@@ -147,19 +148,17 @@ struct Gates {
 
     while (s.find(" ", start) != -1) {
       string value = anotherTokenize(s, start);
-      if (value == "") {
+      if (value == "" || !isNumber(value)) {
         return false;
       }
       this->array[this->size++] = stoi(value);
     }
 
-    if (start >= (int)s.size() - 1) {
-      string value = s.substr(start);
-      if (value == "") {
-        return false;
-      }
-      this->array[this->size++] = stoi(value);
+    string value = s.substr(start);
+    if (value == "" || !isNumber(value)) {
+      return false;
     }
+    this->array[this->size++] = stoi(value);
 
     if (this->size == 0) {
       return false;
@@ -177,7 +176,6 @@ struct Gates {
 
     return true;
   }
-
 
   ~Gates() {
     delete this->array;
@@ -229,16 +227,27 @@ struct KamarTaj {
 
   bool initMatrix(string s, int &start) {
     this->matrix = new int *[ROW] { nullptr };
+    int pre_start = -1, size = 0;
+
     for (int i = 0; i < ROW; i++) {
       this->matrix[i] = new int[COLUMN];
       for (int j = 0; j < COLUMN; j++) {
+        pre_start = start;
         string num = anotherTokenize(s, start);
-        if (num == "") {
+        if (num == "" || !isNumber(num) ||
+            (pre_start == start && size != ROW * COLUMN - 1)) {
           return false;
         }
         this->matrix[i][j] = stoi(num);
+        size++;
       }
     }
+
+    // matrix oversize
+    if ((int)s.find(" ", pre_start) != -1) {
+      return false;
+    }
+
     return true;
   }
 
@@ -432,16 +441,10 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
   /// in this function.
   Doctor doctor(stoi(HP), stoi(HP), stoi(LV), stoi(EXP), stoi(TS));
 
-  if (events[0] == '!') {
-    int start = 1;
+  if (events[0] == '!' && events[(int)events.size() - 1] == '!') {
+    int start = 1, ith_event = 0;
 
-    if (events[(int)events.size() - 1] != '!') {
-      return -1;
-    }
-
-    int ith_event = 0;
     while (start != (int)events.size()) {
-
       if (!doctor.throwback.isActivate) {
         // save event index for time throwback
         doctor.throwback.return_at_event = start;
@@ -451,7 +454,8 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       cout << "event: " << event << "\n";
       string event_num_str;
 
-      if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" || !isNumber(event_num_str)) {
+      if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" ||
+          !isNumber(event_num_str)) {
         return -1;
       }
 
@@ -483,22 +487,37 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
       switch (event_num) {
       case 1: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         practice(doctor, ith_event, LVo, 10, 1.5);
         break;
       }
       case 2: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         practice(doctor, ith_event, LVo, 20, 2.5);
         break;
       }
       case 3: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         practice(doctor, ith_event, LVo, 40, 4.5);
         break;
       }
       case 4: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         practice(doctor, ith_event, LVo, 50, 7.5);
         break;
       }
       case 5: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         practice(doctor, ith_event, LVo, 70, 9.5);
         break;
       }
@@ -562,6 +581,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 7: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         if (doctor.wanda.deprive_levitation) {
           break;
         }
@@ -582,6 +604,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 8: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         if (!doctor.wong.isCalled) {
           doctor.wong.init();
         } else {
@@ -605,6 +630,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 9: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         doctor.HP = doctor.maxHP;
         doctor.wong.kill();
         doctor.levitation.summon();
@@ -612,6 +640,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 10: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         std::cout << "Fibonacci: " << Fibonacci(doctor.HP - 1) << std::endl;
         doctor.HP += Fibonacci(doctor.HP - 1);
         if (doctor.HP > doctor.maxHP) {
@@ -620,6 +651,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 11: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         // real Wong helps doctor
         if (!doctor.wong.returnToKamarTaj(doctor.wong.isReal)) {
           doctor.wong.times_help--;
@@ -754,18 +788,20 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
       case 14: {
         int st = (int)event.find(" ", 0);
-        if (st == -1) {
+        if (st == -1 || (int)event.find(" ", ++st) == -1) {
           return -1;
         }
-        st += 1;
 
         string key = anotherTokenize(event, st);
         std::cout << "key: " << key << std::endl;
+        if (!isNumber(key)) {
+          return -1;
+        }
 
         if (doctor.gates.initGates(event, st)) {
-            if (!doctor.gates.areDecrease()) {
-              return -1;
-            }
+          if (!doctor.gates.areDecrease()) {
+            return -1;
+          }
           for (int i = 0; i < doctor.gates.size; i++) {
             std::cout << doctor.gates.array[i] << " ";
           }
@@ -792,9 +828,15 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         break;
       }
       case 15: {
+        if ((int)event.find(" ") != -1)
+          return -1;
+
         if (!doctor.throwback.isActivate && doctor.TS >= 1) {
-          doctor.throwback.activate(start);
-          doctor.initThrowBack(doctor.throwback.maxHP, 10, 100, doctor.TS - 1);
+          if (doctor.throwback.maxHP < doctor.HP) {
+            doctor.throwback.activate(start);
+            doctor.initThrowBack(doctor.throwback.maxHP, 10, 100,
+                                 doctor.TS - 1);
+          }
         }
         break;
       }
