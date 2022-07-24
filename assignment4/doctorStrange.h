@@ -26,8 +26,10 @@ struct Levitation {
   int times_resist;
   bool isReal;
   bool isWearing;
+  int need_to_increase;
 
-  Levitation() : times_resist(0), isReal(false), isWearing(false) {}
+  Levitation()
+      : times_resist(0), need_to_increase(2), isReal(false), isWearing(false) {}
 
   void summon() {
     this->times_resist = 3;
@@ -143,8 +145,8 @@ struct Gates {
   Gates() : array(nullptr), size(0) {}
 
   bool initGates(string s, int &start) {
-    this->array = new int;
-    cout << "s: " << s << "\n";
+    this->array = new int[(int)s.size()];
+    // cout << "s: " << s << "\n";
 
     while (s.find(" ", start) != -1) {
       string value = anotherTokenize(s, start);
@@ -178,7 +180,7 @@ struct Gates {
   }
 
   ~Gates() {
-    delete this->array;
+    delete[] this->array;
     this->size = 0;
     this->array = nullptr;
   }
@@ -351,7 +353,7 @@ bool isAlphabet(string s) {
 
 bool isNumber(string s) {
   for (int i = 0; i < (int)s.size(); i++) {
-    if (s[i] > '9' || s[i] < '1') {
+    if (s[i] > '9' || s[i] < '0') {
       return false;
     }
   }
@@ -404,13 +406,13 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
     if (doctor.levitation.isWearing && doctor.levitation.isReal) {
       if (doctor.levitation.times_resist >= 1) {
         int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
-        std::cout << "nearestPrime: " << nearestPrime(doctor.HP) << std::endl;
-        std::cout << "G_y: " << G_y << std::endl;
-        std::cout << "LVo: " << LVo << std::endl;
-        std::cout << "baseDamage: " << baseDamage << std::endl;
-        std::cout << "damage: "
-                  << (int)(baseDamage * LVo * 10) * (100 - G_y) / 100
-                  << std::endl;
+        // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) << std::endl;
+        // std::cout << "G_y: " << G_y << std::endl;
+        // std::cout << "LVo: " << LVo << std::endl;
+        // std::cout << "baseDamage: " << baseDamage << std::endl;
+        // std::cout << "damage: "
+        //           << (int)(baseDamage * LVo * 10) * (100 - G_y) / 100
+        //           << std::endl;
         doctor.HP -= (int)((baseDamage * LVo * 10) * (100 - G_y) / 100);
         doctor.levitation.times_resist--;
       } else {
@@ -440,6 +442,10 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
   /// Students have to complete this function and DO NOT modify any parameters
   /// in this function.
   Doctor doctor(stoi(HP), stoi(HP), stoi(LV), stoi(EXP), stoi(TS));
+  if ((doctor.HP > 999 || doctor.HP <= 0) ||
+      (doctor.LV > 10 || doctor.LV < 1) ||
+      (doctor.EXP > 100 || doctor.EXP < 0) || (doctor.TS > 5 || doctor.TS < 0))
+    return -1;
 
   if (events[0] == '!' && events[(int)events.size() - 1] == '!') {
     int start = 1, ith_event = 0;
@@ -450,8 +456,17 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         doctor.throwback.return_at_event = start;
       }
 
+      if (!doctor.throwback.isActivate) {
+        if (doctor.throwback.maxHP <= doctor.HP) {
+          doctor.throwback.maxHP = doctor.HP;
+          doctor.throwback.event_has_maxHP = doctor.throwback.return_at_event;
+        } else {
+          doctor.throwback.return_at_event = doctor.throwback.event_has_maxHP;
+        }
+      }
+
       string event = Tokenize(events, start, "#");
-      cout << "event: " << event << "\n";
+      // cout << "event: " << event << "\n";
       string event_num_str;
 
       if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" ||
@@ -481,6 +496,8 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           //  the cloak is incapacitated
           if (doctor.LV < 3) {
             doctor.LV = 1;
+          } else {
+            doctor.LV -= doctor.levitation.need_to_increase;
           }
         }
       }
@@ -547,16 +564,16 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
             int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
             // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) <<
             // std::endl;
-            std::cout << "G_y: " << G_y << std::endl;
+            // std::cout << "G_y: " << G_y << std::endl;
             winning_rate += G_y;
             blood_loss_reduction_rate += G_y;
             isActivate = true;
           }
         }
 
-        std::cout << "winning_rate: " << winning_rate << std::endl;
-        std::cout << "blood_loss_reduction_rate: " << blood_loss_reduction_rate
-                  << std::endl;
+        // std::cout << "winning_rate: " << winning_rate << std::endl;
+        // std::cout << "blood_loss_reduction_rate: " << blood_loss_reduction_rate
+        //           << std::endl;
 
         if (winning_rate > F_x) {
           levelUp(doctor, 200);
@@ -589,7 +606,15 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
 
         if (!doctor.levitation.isWearing) {
-          doctor.LV += 2;
+          if (doctor.LV == 9) {
+            doctor.levitation.need_to_increase = 1;
+          } else if (doctor.LV == 10) {
+            doctor.levitation.need_to_increase = 0;
+          } else {
+            doctor.levitation.need_to_increase = 2;
+          }
+
+          doctor.LV += doctor.levitation.need_to_increase;
           if (doctor.LV > 10) {
             doctor.LV = 10;
           }
@@ -599,8 +624,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           doctor.levitation.summon();
         } else if (!doctor.levitation.isReal) {
           doctor.levitation.isReal = true;
-          doctor.wong.kill();
+          doctor.LV += doctor.levitation.need_to_increase;
         }
+
         break;
       }
       case 8: {
@@ -616,6 +642,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
             if (doctor.levitation.isWearing) {
               doctor.levitation.isReal = false;
+
+              if (doctor.LV < 3) {
+                doctor.LV = 1;
+              } else {
+                doctor.LV -= doctor.levitation.need_to_increase;
+              }
+
               doctor.wong.times_help--;
             }
 
@@ -643,7 +676,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         if ((int)event.find(" ") != -1)
           return -1;
 
-        std::cout << "Fibonacci: " << Fibonacci(doctor.HP - 1) << std::endl;
+        // std::cout << "Fibonacci: " << Fibonacci(doctor.HP - 1) << std::endl;
         doctor.HP += Fibonacci(doctor.HP - 1);
         if (doctor.HP > doctor.maxHP) {
           doctor.HP = doctor.maxHP;
@@ -720,6 +753,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           // the decryption is fail
           doctor.wanda.activate(doctor.TS);
           doctor.levitation.isWearing = false;
+
+          if (doctor.LV < 3) {
+            doctor.LV = 1;
+          } else {
+            doctor.LV -= doctor.levitation.need_to_increase;
+          }
+
           doctor.TS = 0;
           levelUp(doctor, 15);
         }
@@ -732,17 +772,22 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
         st += 1;
 
+        // unreal wong need to be removed
+        if (doctor.wong.isCalled && !doctor.wong.isReal) {
+          doctor.wong.kill();
+        }
+
         KamarTaj kamar_taj;
         if (kamar_taj.initMatrix(event, st)) {
-          for (int i = 0; i < ROW; i++) {
-            for (int j = 0; j < COLUMN; j++) {
-              cout << kamar_taj.matrix[i][j] << " ";
-            }
-            cout << "\n";
-          }
+          // for (int i = 0; i < ROW; i++) {
+          //   for (int j = 0; j < COLUMN; j++) {
+          //     cout << kamar_taj.matrix[i][j] << " ";
+          //   }
+          //   cout << "\n";
+          // }
           int min_sum = INT16_MIN, min_index_row = -1, min_index_column = -1;
           int m = (ith_event % 7) > 2 ? (ith_event % 7) : 2;
-          std::cout << "m: " << m << std::endl;
+          // std::cout << "m: " << m << std::endl;
           for (int i = ROW - m; i >= 0; i--) {
             for (int j = COLUMN - m; j >= 0; j--) {
               int sum = 0;
@@ -759,9 +804,9 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
             }
           }
 
-          std::cout << "min_sum: " << min_sum << "\n"
-                    << "index_row: " << min_index_row << "\n"
-                    << "index_column: " << min_index_column << std::endl;
+          // std::cout << "min_sum: " << min_sum << "\n"
+          //           << "index_row: " << min_index_row << "\n"
+          //           << "index_column: " << min_index_column << std::endl;
           if (kamar_taj.matrixIncrease(m, min_index_row, min_index_column)) {
             // the defense against Wanda’s attack is successful
             doctor.HP += min_sum * (min_index_row + 1 + min_index_column + 1);
@@ -793,19 +838,24 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
 
         string key = anotherTokenize(event, st);
-        std::cout << "key: " << key << std::endl;
+        // std::cout << "key: " << key << std::endl;
         if (!isNumber(key)) {
           return -1;
+        }
+
+        // unreal wong need to be removed
+        if (doctor.wong.isCalled && !doctor.wong.isReal) {
+          doctor.wong.kill();
         }
 
         if (doctor.gates.initGates(event, st)) {
           if (!doctor.gates.areDecrease()) {
             return -1;
           }
-          for (int i = 0; i < doctor.gates.size; i++) {
-            std::cout << doctor.gates.array[i] << " ";
-          }
-          cout << "size: " << doctor.gates.size << "\n";
+          // for (int i = 0; i < doctor.gates.size; i++) {
+          //   std::cout << doctor.gates.array[i] << " ";
+          // }
+          // cout << "size: " << doctor.gates.size << "\n";
           int wanda_moves = log2(doctor.gates.size);
           // cout << "wanda_moves: " << wanda_moves << "\n";
           int total_moves = 0;
@@ -813,7 +863,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           if (doctor.wanda.findExitWay(doctor.gates.array, doctor.gates.size,
                                        stoi(key), wanda_moves, total_moves)) {
             // Wanda can find the exit way
-            cout << "total_moves: " << total_moves << "\n";
+            // cout << "total_moves: " << total_moves << "\n";
             doctor.LV = 1;
             doctor.HP = doctor.HP - total_moves * (ith_event % 10) * 7;
           } else {
@@ -832,7 +882,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           return -1;
 
         if (!doctor.throwback.isActivate && doctor.TS >= 1) {
-          if (doctor.throwback.maxHP < doctor.HP) {
+          if (doctor.throwback.maxHP > doctor.HP) {
             doctor.throwback.activate(start);
             doctor.initThrowBack(doctor.throwback.maxHP, 10, 100,
                                  doctor.TS - 1);
@@ -859,31 +909,22 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         doctor.HP = doctor.maxHP;
       }
 
-      if (!doctor.throwback.isActivate) {
-        if (doctor.throwback.maxHP <= doctor.HP) {
-          doctor.throwback.maxHP = doctor.HP;
-          doctor.throwback.event_has_maxHP = doctor.throwback.return_at_event;
-        } else {
-          doctor.throwback.return_at_event = doctor.throwback.event_has_maxHP;
-        }
-      }
-
-      cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
-           << " " << doctor.EXP << " " << doctor.TS << "\n";
-      cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
-           << " " << doctor.wong.times_help << "\n";
-      cout << "levitation: " << doctor.levitation.isWearing << " "
-           << doctor.levitation.isReal << " " << doctor.levitation.times_resist
-           << '\n';
-      cout << "mushroom: " << doctor.mushroom.isEating << " "
-           << doctor.mushroom.times_poisoned << '\n';
-      cout << "wanda: " << doctor.wanda.deprive_levitation << " "
-           << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
-           << " " << doctor.wanda.TS << '\n';
-      cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
-           << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
-           << '\n'
-           << '\n';
+      // cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
+      //      << " " << doctor.EXP << " " << doctor.TS << "\n";
+      // cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
+      //      << " " << doctor.wong.times_help << "\n";
+      // cout << "levitation: " << doctor.levitation.isWearing << " "
+      //      << doctor.levitation.isReal << " " << doctor.levitation.times_resist
+      //      << " " << doctor.levitation.need_to_increase << '\n';
+      // cout << "mushroom: " << doctor.mushroom.isEating << " "
+      //      << doctor.mushroom.times_poisoned << '\n';
+      // cout << "wanda: " << doctor.wanda.deprive_levitation << " "
+      //      << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
+      //      << " " << doctor.wanda.TS << '\n';
+      // cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
+      //      << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
+      //      << '\n'
+      //      << '\n';
     }
     return doctor.HP + doctor.LV + doctor.EXP + doctor.TS;
   }
