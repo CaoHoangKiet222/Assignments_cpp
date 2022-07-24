@@ -406,11 +406,10 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
     if (doctor.levitation.isWearing && doctor.levitation.isReal) {
       if (doctor.levitation.times_resist >= 1) {
         int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
-        // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) << std::endl;
-        // std::cout << "G_y: " << G_y << std::endl;
-        // std::cout << "LVo: " << LVo << std::endl;
-        // std::cout << "baseDamage: " << baseDamage << std::endl;
-        // std::cout << "damage: "
+        // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) <<
+        // std::endl; std::cout << "G_y: " << G_y << std::endl; std::cout <<
+        // "LVo: " << LVo << std::endl; std::cout << "baseDamage: " <<
+        // baseDamage << std::endl; std::cout << "damage: "
         //           << (int)(baseDamage * LVo * 10) * (100 - G_y) / 100
         //           << std::endl;
         doctor.HP -= (int)((baseDamage * LVo * 10) * (100 - G_y) / 100);
@@ -466,7 +465,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
 
       string event = Tokenize(events, start, "#");
-      // cout << "event: " << event << "\n";
+      cout << "event: " << event << "\n";
       string event_num_str;
 
       if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" ||
@@ -482,12 +481,13 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
       if (doctor.mushroom.isEating) {
         if (doctor.mushroom.times_poisoned >= 1) {
-          doctor.LV -= 2;
-
-          if (doctor.LV < 3) {
-            doctor.LV = 1;
-          }
           doctor.mushroom.times_poisoned--;
+        } else {
+          doctor.LV += 2;
+          if (doctor.LV > 10) {
+            doctor.LV = 10;
+          }
+          doctor.mushroom.isEating = false;
         }
       }
 
@@ -572,7 +572,8 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
 
         // std::cout << "winning_rate: " << winning_rate << std::endl;
-        // std::cout << "blood_loss_reduction_rate: " << blood_loss_reduction_rate
+        // std::cout << "blood_loss_reduction_rate: " <<
+        // blood_loss_reduction_rate
         //           << std::endl;
 
         if (winning_rate > F_x) {
@@ -640,6 +641,11 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           if (doctor.wong.times_help < 1) {
             doctor.wong.initFake();
 
+            if (doctor.LV >= 7) {
+              doctor.wong.kill();
+              break;
+            }
+
             if (doctor.levitation.isWearing) {
               doctor.levitation.isReal = false;
 
@@ -651,6 +657,12 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
               doctor.wong.times_help--;
             }
+
+            // if (doctor.LV >= 7 && doctor.wong.isCalled &&
+            // !doctor.wong.isReal) {
+            //   doctor.wong.kill();
+            //     doctor.LV -= doctor.levitation.need_to_increase;
+            // }
 
             break;
           }
@@ -695,6 +707,12 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
         if (!doctor.mushroom.isEating) {
           doctor.mushroom.activate();
+
+          if (doctor.LV < 3) {
+            doctor.LV = 1;
+          } else {
+            doctor.LV -= 2;
+          }
         }
 
         // unreal Wong ignores doctor
@@ -892,10 +910,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
       }
 
-      if (doctor.LV >= 7) {
-        doctor.wong.kill();
-      }
-
       // save HP after doing event for time throwback
       if (doctor.HP <= 0) {
         if (doctor.TS == 0) {
@@ -909,22 +923,22 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         doctor.HP = doctor.maxHP;
       }
 
-      // cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
-      //      << " " << doctor.EXP << " " << doctor.TS << "\n";
-      // cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
-      //      << " " << doctor.wong.times_help << "\n";
-      // cout << "levitation: " << doctor.levitation.isWearing << " "
-      //      << doctor.levitation.isReal << " " << doctor.levitation.times_resist
-      //      << " " << doctor.levitation.need_to_increase << '\n';
-      // cout << "mushroom: " << doctor.mushroom.isEating << " "
-      //      << doctor.mushroom.times_poisoned << '\n';
-      // cout << "wanda: " << doctor.wanda.deprive_levitation << " "
-      //      << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
-      //      << " " << doctor.wanda.TS << '\n';
-      // cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
-      //      << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
-      //      << '\n'
-      //      << '\n';
+      cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
+           << " " << doctor.EXP << " " << doctor.TS << "\n";
+      cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
+           << " " << doctor.wong.times_help << "\n";
+      cout << "levitation: " << doctor.levitation.isWearing << " "
+           << doctor.levitation.isReal << " " << doctor.levitation.times_resist
+           << " " << doctor.levitation.need_to_increase << '\n';
+      cout << "mushroom: " << doctor.mushroom.isEating << " "
+           << doctor.mushroom.times_poisoned << '\n';
+      cout << "wanda: " << doctor.wanda.deprive_levitation << " "
+           << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
+           << " " << doctor.wanda.TS << '\n';
+      cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
+           << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
+           << '\n'
+           << '\n';
     }
     return doctor.HP + doctor.LV + doctor.EXP + doctor.TS;
   }
