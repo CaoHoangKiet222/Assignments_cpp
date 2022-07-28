@@ -29,7 +29,7 @@ struct Levitation {
   int need_to_increase;
 
   Levitation()
-      : times_resist(0), need_to_increase(2), isReal(false), isWearing(false) {}
+      : times_resist(0), isReal(false), isWearing(false), need_to_increase(2)  {}
 
   void summon() {
     this->times_resist = 3;
@@ -146,9 +146,8 @@ struct Gates {
 
   bool initGates(string s, int &start) {
     this->array = new int[(int)s.size()];
-    // cout << "s: " << s << "\n";
 
-    while (s.find(" ", start) != -1) {
+    while ((int)s.find(" ", start) != -1) {
       string value = anotherTokenize(s, start);
       if (value == "" || !isNumber(value)) {
         return false;
@@ -406,12 +405,6 @@ void practice(Doctor &doctor, int ith_event, int LVo, int exp,
     if (doctor.levitation.isWearing && doctor.levitation.isReal) {
       if (doctor.levitation.times_resist >= 1) {
         int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
-        // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) <<
-        // std::endl; std::cout << "G_y: " << G_y << std::endl; std::cout <<
-        // "LVo: " << LVo << std::endl; std::cout << "baseDamage: " <<
-        // baseDamage << std::endl; std::cout << "damage: "
-        //           << (int)(baseDamage * LVo * 10) * (100 - G_y) / 100
-        //           << std::endl;
         doctor.HP -= (int)((baseDamage * LVo * 10) * (100 - G_y) / 100);
         doctor.levitation.times_resist--;
       } else {
@@ -465,7 +458,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
       }
 
       string event = Tokenize(events, start, "#");
-      cout << "event: " << event << "\n";
       string event_num_str;
 
       if ((event_num_str = event.substr(0, (int)event.find(" ", 0))) == "" ||
@@ -562,19 +554,12 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         if (doctor.levitation.isWearing && doctor.levitation.isReal) {
           if (doctor.levitation.times_resist >= 1) {
             int G_y = (ith_event + nearestPrime(doctor.HP)) % 100;
-            // std::cout << "nearestPrime: " << nearestPrime(doctor.HP) <<
-            // std::endl;
-            // std::cout << "G_y: " << G_y << std::endl;
             winning_rate += G_y;
             blood_loss_reduction_rate += G_y;
             isActivate = true;
           }
         }
 
-        // std::cout << "winning_rate: " << winning_rate << std::endl;
-        // std::cout << "blood_loss_reduction_rate: " <<
-        // blood_loss_reduction_rate
-        //           << std::endl;
 
         if (winning_rate > F_x) {
           levelUp(doctor, 200);
@@ -688,7 +673,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         if ((int)event.find(" ") != -1)
           return -1;
 
-        // std::cout << "Fibonacci: " << Fibonacci(doctor.HP - 1) << std::endl;
         doctor.HP += Fibonacci(doctor.HP - 1);
         if (doctor.HP > doctor.maxHP) {
           doctor.HP = doctor.maxHP;
@@ -761,7 +745,7 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           }
         }
 
-        if (code_1.find(code_2) != -1) {
+        if ((int)code_1.find(code_2) != -1) {
           // the decryption is successful
           doctor.HP -= doctor.HP * 0.1;
           doctor.maxHP -= doctor.maxHP * 0.1;
@@ -797,15 +781,8 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
 
         KamarTaj kamar_taj;
         if (kamar_taj.initMatrix(event, st)) {
-          // for (int i = 0; i < ROW; i++) {
-          //   for (int j = 0; j < COLUMN; j++) {
-          //     cout << kamar_taj.matrix[i][j] << " ";
-          //   }
-          //   cout << "\n";
-          // }
           int min_sum = INT16_MIN, min_index_row = -1, min_index_column = -1;
           int m = (ith_event % 7) > 2 ? (ith_event % 7) : 2;
-          // std::cout << "m: " << m << std::endl;
           for (int i = ROW - m; i >= 0; i--) {
             for (int j = COLUMN - m; j >= 0; j--) {
               int sum = 0;
@@ -822,9 +799,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
             }
           }
 
-          // std::cout << "min_sum: " << min_sum << "\n"
-          //           << "index_row: " << min_index_row << "\n"
-          //           << "index_column: " << min_index_column << std::endl;
           if (kamar_taj.matrixIncrease(m, min_index_row, min_index_column)) {
             // the defense against Wanda’s attack is successful
             doctor.HP += min_sum * (min_index_row + 1 + min_index_column + 1);
@@ -856,7 +830,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         }
 
         string key = anotherTokenize(event, st);
-        // std::cout << "key: " << key << std::endl;
         if (!isNumber(key)) {
           return -1;
         }
@@ -870,18 +843,12 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
           if (!doctor.gates.areDecrease()) {
             return -1;
           }
-          // for (int i = 0; i < doctor.gates.size; i++) {
-          //   std::cout << doctor.gates.array[i] << " ";
-          // }
-          // cout << "size: " << doctor.gates.size << "\n";
           int wanda_moves = log2(doctor.gates.size);
-          // cout << "wanda_moves: " << wanda_moves << "\n";
           int total_moves = 0;
 
           if (doctor.wanda.findExitWay(doctor.gates.array, doctor.gates.size,
                                        stoi(key), wanda_moves, total_moves)) {
             // Wanda can find the exit way
-            // cout << "total_moves: " << total_moves << "\n";
             doctor.LV = 1;
             doctor.HP = doctor.HP - total_moves * (ith_event % 10) * 7;
           } else {
@@ -923,22 +890,6 @@ int handleEvents(string &HP, string &LV, string &EXP, string &TS,
         doctor.HP = doctor.maxHP;
       }
 
-      cout << "doctor: " << doctor.maxHP << " " << doctor.HP << " " << doctor.LV
-           << " " << doctor.EXP << " " << doctor.TS << "\n";
-      cout << "wong: " << doctor.wong.isCalled << " " << doctor.wong.isReal
-           << " " << doctor.wong.times_help << "\n";
-      cout << "levitation: " << doctor.levitation.isWearing << " "
-           << doctor.levitation.isReal << " " << doctor.levitation.times_resist
-           << " " << doctor.levitation.need_to_increase << '\n';
-      cout << "mushroom: " << doctor.mushroom.isEating << " "
-           << doctor.mushroom.times_poisoned << '\n';
-      cout << "wanda: " << doctor.wanda.deprive_levitation << " "
-           << doctor.wanda.chances_to_kill << " " << doctor.wanda.negotiation
-           << " " << doctor.wanda.TS << '\n';
-      cout << "timethrowback: " << doctor.throwback.event_has_maxHP << " "
-           << doctor.throwback.maxHP << " " << doctor.throwback.isActivate
-           << '\n'
-           << '\n';
     }
     return doctor.HP + doctor.LV + doctor.EXP + doctor.TS;
   }
