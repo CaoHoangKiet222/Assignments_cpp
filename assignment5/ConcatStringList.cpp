@@ -81,12 +81,19 @@ CharALNode *&CharALNode::getNext() { return this->next; }
 // }
 
 // ============= ConcatStringList ===================
-ConcatStringList::ConcatStringList() { this->head = this->tail = nullptr; }
+ConcatStringList::ConcatStringList() {
+  this->head = this->tail = nullptr;
+  this->totalLength = 0;
+}
 
 ConcatStringList::ConcatStringList(const char *s) {
   if (s) {
-    this->head = this->tail = new CharALNode(s);
+    CharALNode *node = new CharALNode(s);
+    this->head = this->tail = node;
     this->totalLength += this->head->getCharArrayList().size();
+
+    // initialize refList
+    addReferenceNode(node, 2);
   } else {
     this->head = this->tail = nullptr;
     this->totalLength = 0;
@@ -133,7 +140,7 @@ std::string ConcatStringList::toString() const {
     }
     i = i->getNext();
   }
-  return "ConcatStringList[\"" + s + "\"]";
+  return "\"ConcatStringList[\"" + s + "\"]\"";
 }
 
 ConcatStringList
@@ -143,7 +150,16 @@ ConcatStringList::concat(const ConcatStringList &otherS) const {
   concatString.totalLength = otherS.totalLength + this->totalLength;
   this->tail->getNext() = otherS.head;
   concatString.head = this->head;
-  concatString.tail = this->tail;
+  concatString.tail = otherS.tail;
+
+  // initialize refList
+  ReferencesListNode *i = refList.getHead(), *preI = nullptr;
+  runSwapReferenceNodes(i, preI, concatString.head);
+
+  i = refList.getHead();
+  preI = nullptr;
+  runSwapReferenceNodes(i, preI, concatString.tail);
+
   return concatString;
 }
 
@@ -158,6 +174,7 @@ ConcatStringList ConcatStringList::subString(int from, int to) const {
 
   CharALNode *i = this->head;
   bool isFirst = true;
+  const char *charList;
   while (i && from >= 0 && to >= 0 && from < to) {
     std::string s = "";
     bool found = false;
@@ -178,10 +195,19 @@ ConcatStringList ConcatStringList::subString(int from, int to) const {
       concatString.totalLength += concatString.tail->getCharArrayList().size();
       delete[] charList;
     }
-    i = i->getNext();
     from -= i->getCharArrayList().size();
     to -= i->getCharArrayList().size();
+    i = i->getNext();
   }
+
+  // initialize refList
+  if (concatString.head == concatString.tail) {
+    addReferenceNode(concatString.tail, 2);
+  } else {
+    addReferenceNode(concatString.head, 1);
+    addReferenceNode(concatString.tail, 1);
+  }
+
   return concatString;
 }
 
@@ -204,13 +230,21 @@ ConcatStringList ConcatStringList::reverse() const {
       concatString.head = concatString.tail = new CharALNode(reverseString);
       isFirst = false;
     } else {
-      CharALNode* temp = new CharALNode(reverseString);
+      CharALNode *temp = new CharALNode(reverseString);
       temp->getNext() = concatString.head;
       concatString.head = temp;
     }
     concatString.totalLength += concatString.head->getCharArrayList().size();
-    delete [] reverseString;
+    delete[] reverseString;
     i = i->getNext();
+  }
+
+  // initialize refList
+  if (concatString.head == concatString.tail) {
+    addReferenceNode(concatString.tail, 2);
+  } else {
+    addReferenceNode(concatString.head, 1);
+    addReferenceNode(concatString.tail, 1);
   }
   return concatString;
 }
@@ -224,5 +258,141 @@ char *reverseCharPointer(CharArrayList arrayList) {
   return result;
 }
 
-ConcatStringList::~ConcatStringList() {
+// need to implement
+ConcatStringList::~ConcatStringList() {}
+
+// ============= ReferencesListNode ===================
+ReferencesListNode::ReferencesListNode() {
+  this->charNode = nullptr;
+  this->numOfRef = 0;
+  this->next = nullptr;
+}
+
+ReferencesListNode::ReferencesListNode(CharALNode *&node, const int &numOfRef) {
+  this->charNode = node;
+  this->numOfRef = numOfRef;
+  this->next = nullptr;
+}
+
+ReferencesListNode *&ReferencesListNode::getNext() { return this->next; }
+
+CharALNode *&ReferencesListNode::getCharALNode() { return this->charNode; }
+
+int ReferencesListNode::getNumOfRef() const { return this->numOfRef; }
+
+void ReferencesListNode::setNumOfRef(int number) { this->numOfRef = number; }
+
+// ============= ReferencesList ===================
+int ConcatStringList::ReferencesList::size() const { return this->numOfNodes; }
+
+int ConcatStringList::ReferencesList::refCountAt(int index) const {
+  if (index > refList.numOfNodes || index < 0) {
+    throw out_of_range("Index of references list is invalid!");
+  }
+  ReferencesListNode *i = refList.head;
+  for (int j = 0; j < index; j++) {
+    i = i->getNext();
+  }
+  return i->getNumOfRef();
+}
+
+std::string ConcatStringList::ReferencesList::refCountsString() const {
+  ReferencesListNode *i = refList.head;
+  std::string result = "";
+  while (i) {
+    int numOfRef = i->getNumOfRef();
+    if (numOfRef) {
+      result += std::to_string(numOfRef);
+    }
+    i = i->getNext();
+  }
+  return "\"TotalRefCounts[" + result + "]\"";
+}
+
+void ConcatStringList::ReferencesList::setNumOfNodes(int number) {
+  this->numOfNodes = number;
+}
+
+ReferencesListNode *&ConcatStringList::ReferencesList::getHead() {
+  return this->head;
+}
+
+ReferencesListNode *&ConcatStringList::ReferencesList::getTail() {
+  return this->tail;
+}
+
+void ConcatStringList::ReferencesList::swapReferenceNodes(
+    ReferencesListNode *&node1, ReferencesListNode *&node2,
+    ReferencesListNode *&preOfNode1) {
+  bool isTopList = false;
+  if (preOfNode1) {
+    preOfNode1->getNext() = node2;
+
+    // change preOfNode1
+    preOfNode1 = preOfNode1->getNext();
+  } else {
+    isTopList = true;
+  }
+
+  node1->getNext() = node2->getNext();
+  node2->getNext() = node1;
+
+  // change head
+  if (isTopList) {
+    preOfNode1 = refList.getHead() = node2;
+  }
+  // change tail
+  if (node1->getNext() == nullptr) {
+    refList.getTail() = node1;
+  }
+}
+
+void runSwapReferenceNodes(ReferencesListNode *&i, ReferencesListNode *&preI,
+                           CharALNode *&node) {
+  bool found = false;
+  while (i && !found) {
+    if (i->getCharALNode() == node) {
+      // increase numOfRef by 1
+      i->setNumOfRef(i->getNumOfRef() + 1);
+      while (i && i->getNext()) {
+        if (i->getNumOfRef() > i->getNext()->getNumOfRef()) {
+          ConcatStringList::refList.swapReferenceNodes(i, i->getNext(), preI);
+          // i had been change so don't need i = i->getNext() and preI =
+          // preI->getNext()
+        } else {
+          break;
+        }
+      }
+      found = true;
+    }
+
+    preI = i;
+    i = i->getNext();
+  }
+}
+
+void addReferenceNode(CharALNode *&node, const int &numOfRef) {
+  if (ConcatStringList::refList.size() == 0) {
+    ConcatStringList::refList.getHead() = ConcatStringList::refList.getTail() =
+        new ReferencesListNode(node, numOfRef);
+  } else {
+    ReferencesListNode *i = ConcatStringList::refList.getHead(),
+                       *preI = nullptr;
+    while (i && i->getNumOfRef() < numOfRef) {
+      preI = i;
+      i = i->getNext();
+    }
+    // same address like &(*i) == &(*refList.getHead())
+    ReferencesListNode *refNode = new ReferencesListNode(node, numOfRef);
+    if (preI == nullptr) {
+      // insert before element
+      refNode->getNext() = i;
+    } else {
+      preI->getNext() = refNode;
+      refNode->getNext() = i;
+    }
+    // increase size ReferencesList
+    ConcatStringList::refList.setNumOfNodes(ConcatStringList::refList.size() +
+                                            1);
+  }
 }

@@ -23,13 +23,29 @@ class CharALNode {
 public:
   CharALNode();
   CharALNode(const char *s);
-  CharArrayList& getCharArrayList();
-  CharALNode*& getNext();
+  CharArrayList &getCharArrayList();
+  CharALNode *&getNext();
   // ~CharALNode();
 
 private:
   CharArrayList arrayList;
   CharALNode *next;
+};
+
+// ============= ReferencesListNode ===================
+class ReferencesListNode {
+public:
+  ReferencesListNode();
+  ReferencesListNode(CharALNode *&node, const int &numOfRef);
+  ReferencesListNode *&getNext();
+  CharALNode *&getCharALNode();
+  int getNumOfRef() const;
+  void setNumOfRef(int number);
+
+private:
+  CharALNode *charNode;
+  int numOfRef;
+  ReferencesListNode *next;
 };
 
 // ============= ConcatStringList ===================
@@ -62,11 +78,20 @@ public:
 public:
   class ReferencesList {
     // TODO: may provide some attributes
+  private:
+    ReferencesListNode *head, *tail;
+    int numOfNodes;
 
   public:
     int size() const;
     int refCountAt(int index) const;
     std::string refCountsString() const;
+    void setNumOfNodes(int number);
+    ReferencesListNode *&getHead();
+    ReferencesListNode *&getTail();
+    void swapReferenceNodes(ReferencesListNode *&node1,
+                            ReferencesListNode *&node2,
+                            ReferencesListNode *&preOfNode1);
   };
 
   class DeleteStringList {
@@ -78,7 +103,10 @@ public:
   };
 };
 
-char* convertStringToCharPointer(std::string s);
-char* reverseCharPointer(CharArrayList arrayList);
+char *convertStringToCharPointer(std::string s);
+char *reverseCharPointer(CharArrayList arrayList);
+void runSwapReferenceNodes(ReferencesListNode *&i, ReferencesListNode *&preI,
+                           CharALNode *&node);
+void addReferenceNode(CharALNode *& node, const int& numOfRef);
 
 #endif // __CONCAT_STRING_LIST_H__
