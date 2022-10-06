@@ -10,8 +10,9 @@ public:
   CharArrayList(const char *s);
   ~CharArrayList();
   int size() const;
-  char &operator[](int index) const;
+  char &operator[](int index);
   int indexOf(char c) const;
+  char *&getStr();
 
 private:
   int length;
@@ -25,10 +26,10 @@ public:
   CharALNode(const char *s);
   CharArrayList &getCharArrayList();
   CharALNode *&getNext();
-  // ~CharALNode();
+  ~CharALNode();
 
 private:
-  CharArrayList arrayList;
+  CharArrayList *arrayList;
   CharALNode *next;
 };
 
@@ -36,16 +37,35 @@ private:
 class ReferencesListNode {
 public:
   ReferencesListNode();
-  ReferencesListNode(CharALNode *&node, const int &numOfRef);
+  ReferencesListNode(CharALNode *&node, const int &numOfRef,
+                     const int &numRefByDelNode);
   ReferencesListNode *&getNext();
   CharALNode *&getCharALNode();
   int getNumOfRef() const;
-  void setNumOfRef(int number);
+  void setNumOfRef(const int &number);
+  // int getNumRefByDelNode() const;
+  // void setNumRefByDelNode(const int &numRefByDelNode);
 
 private:
   CharALNode *charNode;
   int numOfRef;
+  // int numRefByDelNode;
   ReferencesListNode *next;
+};
+
+// ============= DeleteStringListNode ===================
+class DeleteStringListNode {
+public:
+  DeleteStringListNode();
+  DeleteStringListNode(ReferencesListNode *refHead,
+                       ReferencesListNode *refTail);
+  DeleteStringListNode *&getNext();
+  ReferencesListNode *&getRefNodeHead();
+  ReferencesListNode *&getRefNodeTail();
+
+private:
+  ReferencesListNode *refNodeHead, *refNodeTail;
+  DeleteStringListNode *next;
 };
 
 // ============= ConcatStringList ===================
@@ -89,24 +109,30 @@ public:
     void setNumOfNodes(int number);
     ReferencesListNode *&getHead();
     ReferencesListNode *&getTail();
-    void swapReferenceNodes(ReferencesListNode *&node1,
-                            ReferencesListNode *&node2,
-                            ReferencesListNode *&preOfNode1);
+    void addReferenceNode(CharALNode *&node, const int &numOfRef);
+    void incReferenceNode(CharALNode *&node, const int &numOfRef);
+    void decReferenceNode(CharALNode *&node, const int &numOfRef);
+    ReferencesListNode *findRefNode(CharALNode *&node);
+    bool checkAllRefsAreZero() const;
   };
 
   class DeleteStringList {
     // TODO: may provide some attributes
+    DeleteStringListNode *head, *tail;
+    int totalLength;
 
   public:
+    DeleteStringList();
+    DeleteStringListNode *&getHead();
+    DeleteStringListNode *&getTail();
+    void addDeleteStringListNode(DeleteStringListNode *&delNode);
     int size() const;
+    void setSize(int newSize);
     std::string totalRefCountsString() const;
   };
 };
 
 char *convertStringToCharPointer(std::string s);
-char *reverseCharPointer(CharArrayList arrayList);
-void runSwapReferenceNodes(ReferencesListNode *&i, ReferencesListNode *&preI,
-                           CharALNode *&node);
-void addReferenceNode(CharALNode *& node, const int& numOfRef);
+char *reverseCharPointer(CharArrayList &arrayList);
 
 #endif // __CONCAT_STRING_LIST_H__
